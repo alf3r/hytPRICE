@@ -48,7 +48,6 @@ class HytesPrices(tk.Tk):
         self.title("Hytrus v1.5")
         # self.geometry("450x400")
 
-        # текущая временная метка
         self.dirCommon = os.getcwd() + '/workDIR/'
         self.dirLog = os.getcwd() + '/workDIR/99_logs/'
         if not os.path.exists(self.dirCommon):
@@ -59,7 +58,7 @@ class HytesPrices(tk.Tk):
 
         # define variables
         self.myPrefix = tk.StringVar(value='')
-        self.price_date = tk.StringVar(value='2026.Q1')
+        self.price_date = tk.StringVar(value='2026.Q2')
         self.price_version = tk.StringVar(value='V1.0')
         self.currentCurrency = tk.StringVar(value='7.16')
         self.isAntenna = tk.IntVar(value=0)
