@@ -100,7 +100,7 @@ def diff_pd(old_df, new_df, idx_col):
         data.loc[data['MODEL RUS'] != '', 'STATUS'] = sname
         combined_df = pd.concat([data, combined_df])
     combined_df = combined_df[['STATUS', 'MODEL RUS', 'DESCRIPTION ENG', 'DESCRIPTION RUS',
-                           'GPL, CNY', 'РРЦ, USD', 'COMMENTS', 'MAINTYPE', 'SUBTYPE', 'FREQUENCY BAND']
+                           'GPL, CNY', 'РРЦ, CNY', 'COMMENTS', 'MAINTYPE', 'SUBTYPE', 'FREQUENCY BAND']
     ]
     combined_df = combined_df[~combined_df.index.duplicated(keep='last')]
     combined_df = combined_df.sort_values(by="DESCRIPTION RUS")
@@ -657,7 +657,7 @@ def onePagePrice(priceCombine_filename: str, priceOnepage_filename: str, isOnlyA
     sheetOut.cell(row=1, column=3).value = 'DESCRIPTION ENG'
     sheetOut.cell(row=1, column=4).value = 'DESCRIPTION RUS'
     sheetOut.cell(row=1, column=5).value = 'GPL, CNY'
-    sheetOut.cell(row=1, column=6).value = 'РРЦ, USD'
+    sheetOut.cell(row=1, column=6).value = 'РРЦ, CNY'
     sheetOut.cell(row=1, column=7).value = 'COMMENTS'
     sheetOut.cell(row=1, column=8).value = 'MAINTYPE'
     sheetOut.cell(row=1, column=9).value = 'SUBTYPE'
@@ -703,7 +703,7 @@ def setRusPrices(HYTES_PriceList_Filename: str, cpqPricesCombine_Filename: str):
             columns=['MODEL_x', 'NAME_x', 'DESCRIPTION_x', 'MODEL_y', 'NAME_y', 'DESCRIPTION_y',
                      'Old CPQ, USD', 'New CPQ, USD', 'TYPE'])
         joined_df = joined_df[['BOM', 'MODEL RUS', 'DESCRIPTION ENG', 'DESCRIPTION RUS',
-                               'GPL, CNY', 'РРЦ, USD', 'COMMENTS', 'MAINTYPE',
+                               'GPL, CNY', 'РРЦ, CNY', 'COMMENTS', 'MAINTYPE',
                                'SUBTYPE', 'FREQUENCY BAND']]
         joined_df = joined_df.sort_values(by="DESCRIPTION RUS")
         with pd.ExcelWriter(rusPrice_Filename, engine='openpyxl', mode='a') as writer:
@@ -1191,8 +1191,8 @@ def excel2word(excel_File_Rus: str, templateGPL: str, templateRRC: str, dirImage
     convert(filenames[0])
     convert(filenames[1])
     print('Успех! ' + excel2word.__name__)
-    endAll = time.time() - startAll  ## собственно время работы программы
-    print('Время конвертации: '+str(endAll) + ',c')
+    endAll = (time.time() - startAll)/60  ## собственно время работы программы
+    print('Время конвертации: '+str(endAll) + ',мин')
 
 def makeStandardDocxName(old_filename: str, price_date: str, price_version: str):
     dir2save = os.path.dirname(os.path.abspath(old_filename)) + '\\'

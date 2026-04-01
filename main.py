@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 ########################################################################################################################
 # Основное тело программы
 class HytesPrices(tk.Tk):
+    def __del__(self):
+        logger.info('выключение программы')
     def __init__(self):
         super().__init__()
         self.Btn12 = None
@@ -125,7 +127,6 @@ class HytesPrices(tk.Tk):
         self.myLabelCurrency.grid(row=0, column=3, columnspan=1, padx=5, pady=5, sticky='WEW')
         self.myEntryCurrency.grid(row=1, column=3, columnspan=1, padx=5, pady=5, sticky='WEW')
 
-
         #Обработка прайсов из CPQ
         self.Btn6.grid(row=0, column=0, columnspan=1, padx=5, pady=5, sticky='WEW', )
         self.Btn10.grid(row=1, column=0, columnspan=1, padx=5, pady=5, sticky='WEW')
@@ -145,11 +146,13 @@ class HytesPrices(tk.Tk):
         self.Btn4.grid(row=2, column=2, columnspan=1, padx=1, pady=1, sticky='WEW')
         self.Btn11.grid(row=0, column=3, columnspan=1, padx=1, pady=1, sticky='WEW')
 
-        logger.info('Started')
+        logger.info('----------------')
+        logger.info('ЗАПУСК ПРОГРАММЫ')
 
 
     #6 КЛИК - Сделать прайс русский из папки
     def clickButton_rusPricesFromFolder(self):
+        logger.info('Начат "Сделать прайс русский из папки "')
         logger.info('Запущен "Сделать прайс русский из папки"')
         self.isOnlyAntenna = tk.IntVar(value=0)
         dirIn = filedialog.askdirectory(initialdir=self.dirCommon,
@@ -179,6 +182,7 @@ class HytesPrices(tk.Tk):
 
     #10 КЛИК - Сделать прайс Антенны русский из папки
     def clickButton_rusAntennaFromFolder(self):
+        logger.info('Начат "Сделать прайс Антенны русский из папки"')
         self.isOnlyAntenna = tk.IntVar(value=1)
         dirIn = filedialog.askdirectory(initialdir=self.dirCommon,
                                         title='Выберите папку с терминальными прайсами из CPQ')
@@ -209,6 +213,7 @@ class HytesPrices(tk.Tk):
 
     #3 КЛИК - Подставить цены из прайса Хайтес
     def clickButton_rusPricesFromFile(self, **kwargs):
+        logger.info('Начат "Подставить цены из прайса Хайтес"')
         self.myTimestamp = strftime("%Y%m%d%H%M%S", gmtime())
         HYTES_PriceList_Filename = kwargs.get("HYTES_PriceList_Filename")
         if HYTES_PriceList_Filename:
@@ -230,6 +235,8 @@ class HytesPrices(tk.Tk):
 
     #1 КЛИК - Комбинировать ТЕРМИНАЛЬНЫЕ прайсы в одну книгу в виде закладок
     def clickButton_cpqPricesCombine(self, **kwargs):
+        logger.info(
+            'Начат "Комбинировать ТЕРМИНАЛЬНЫЕ прайсы в одну книгу в виде закладок"')
         myTimestamp = strftime("%Y%m%d%H%M%S", gmtime())
         dirIn = kwargs.get("dirIn")
         if dirIn:
@@ -240,6 +247,7 @@ class HytesPrices(tk.Tk):
         os.chdir(dirIn)
         dirName = os.path.basename(dirIn)
         self.myPrefix = dirName
+        self.myEntry1.delete(0, 'end')
         self.myEntry1.insert(0, dirName)
         logger.info('Название папки: "' + dirName + '"')
         wbOut = openpyxl.Workbook()
@@ -264,6 +272,8 @@ class HytesPrices(tk.Tk):
 
     #2 КЛИК - Сделать общий прайс на одной вкладке с уникальными позициями
     def clickButton_onePagePriceUnique(self, **kwargs):
+        logger.info(
+            'Начат "Сделать общий прайс на одной вкладке с уникальными позициями"')
         cpqPricesCombine_Filename = kwargs.get("rusPricesFromFile_Filename")
         if cpqPricesCombine_Filename:
             pass
@@ -282,6 +292,7 @@ class HytesPrices(tk.Tk):
 
     #5 КЛИК - Сохранить изображения из прайса Хайтес
     def clickButton_getImagesFromExcel(self):
+        logger.info('Начат "Сохранить изображения из прайса Хайтес"')
         self.myTimestamp = strftime("%Y%m%d%H%M%S", gmtime())
         HYTES_PriceList_Filename = filedialog.askopenfilename(initialdir=self.dirCommon, title='Выберите "Прайс Хайтес"')
         print('Извлекаю изображения из прайса...')
@@ -292,6 +303,7 @@ class HytesPrices(tk.Tk):
 
     #6 КЛИК - Разделить один лист на много листов
     def clickButton_dividePriceBySheets(self, **kwargs):
+        logger.info('Начат "Разделить один лист на много листов"')
         self.myTimestamp = strftime("%Y%m%d%H%M%S", gmtime())
         onePagePriceUnique_filename = kwargs.get("onePagePriceUnique_filename")
         if onePagePriceUnique_filename:
@@ -308,6 +320,7 @@ class HytesPrices(tk.Tk):
 
     #7 КЛИК - Найти новые BOM-коды
     def clickButton_findNewBOM(self):
+        logger.info('Начат "Найти новые BOM-коды"')
         self.myTimestamp = strftime("%Y%m%d%H%M%S", gmtime())
         priceCombine_filename = filedialog.askopenfilename(initialdir=self.dirCommon, title='Выберите файл "Combine"')
         hytALGORITHMS.findNewBOM(priceCombine_filename)
@@ -316,6 +329,7 @@ class HytesPrices(tk.Tk):
 
     #6 КЛИК - Преобразовать Excel в Word
     def clickButton_makeDOCx(self):
+        logger.info('Начат "Преобразовать Excel в Word"')
         priceDate = self.price_date.get()
         priceVersion = self.price_version.get()
         excel_File_Rus = filedialog.askopenfilename(initialdir=self.dirCommon, title='Выберите файл .XLSX с прайсом "RUS"')
@@ -330,6 +344,7 @@ class HytesPrices(tk.Tk):
 
     #7 КЛИК - сравнение двух файлов EXCEL RUS
     def clickButton_compareEXCELrus(self):
+        logger.info('Начат "Сравнение двух файлов EXCEL RUS"')
         OldFileName = filedialog.askopenfilename(title='Выберите СТАРЫЙ прайс "RUS" для сравнения')
         NewFileName = filedialog.askopenfilename(initialdir=self.dirCommon, title='Выберите НОВЫЙ прайс "RUS" для сравнения')
         print('Сравниваю...')
@@ -339,6 +354,7 @@ class HytesPrices(tk.Tk):
 
    #9 КЛИК - Конвертировать системный прайс в терминальный
     def clickButton_prepareSystem(self):
+        logger.info('Начат "Конвертировать системный прайс в терминальный"')
         dirIn = filedialog.askdirectory(initialdir=self.dirCommon, title='Выберите папку с СИСТЕМНЫМИ прайсами из CPQ')
         os.chdir(dirIn)
         # берем перечень файлов с прайсами
@@ -372,6 +388,7 @@ class HytesPrices(tk.Tk):
 
     #10 КЛИК - Конвертировать GPL шаблон в РРЦ
     def clickButton_convertGPL2RRC(self):
+        logger.info('Начат "Конвертировать GPL шаблон в РРЦ"')
         templateGPL = filedialog.askopenfilename(initialdir=self.dirCommon, title='Выберите файл с шаблоном DOCX GPL')
         hytALGORITHMS.convertGPL2RRC(templateGPL)
         print(self.strComplete + self.clickButton_convertGPL2RRC.__name__)
@@ -379,6 +396,7 @@ class HytesPrices(tk.Tk):
 
     # 11 КЛИК - Конвертировать системный прайс в российский CNY
     def clickButton_convertSystemCNY(self):
+        logger.info('Начат "Конвертировать системный прайс в российский CNY"')
         myTimestamp = strftime("%Y%m%d%H%M%S", gmtime())
         myCurrency = self.currentCurrency.get()
         dirIn = filedialog.askdirectory(initialdir=self.dirCommon, title='Выберите папку с СИСТЕМНЫМИ прайсами из CPQ')
@@ -412,6 +430,8 @@ class HytesPrices(tk.Tk):
 
     #12 КЛИК - Комбинировать СИСТЕМНЫЕ прайсы в одну книгу в виде закладок
     def clickButton_cpqSystemCombine(self, **kwargs):
+        logger.info(
+            'Начат "Комбинировать СИСТЕМНЫЕ прайсы в одну книгу в виде закладок"')
         myTimestamp = strftime("%Y%m%d%H%M%S", gmtime())
         dirIn = kwargs.get("dirIn")
         if dirIn:
