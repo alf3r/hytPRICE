@@ -2,7 +2,7 @@ import logging
 import tkinter as tk
 from datetime import datetime
 from time import gmtime, strftime
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 
 import openpyxl.utils
 from spire.doc.common import *
@@ -153,7 +153,6 @@ class HytesPrices(tk.Tk):
     #6 КЛИК - Сделать прайс русский из папки
     def clickButton_rusPricesFromFolder(self):
         logger.info('Начат "Сделать прайс русский из папки "')
-        logger.info('Запущен "Сделать прайс русский из папки"')
         self.isOnlyAntenna = tk.IntVar(value=0)
         dirIn = filedialog.askdirectory(initialdir=self.dirCommon,
                                         title='Выберите папку с терминальными прайсами из CPQ')
@@ -171,13 +170,14 @@ class HytesPrices(tk.Tk):
         }
         self.clickButton_rusPricesFromFile(**kwargs2)
         numNewBOM = hytALGORITHMS.findNewBOM(cpqPricesCombine_Filename)
+        print("Новых BOM-кодов: " + str(numNewBOM))
         try:
             os.remove(cpqPricesCombine_Filename)
         except OSError:
             pass
-        print("Новых BOM-кодов: " + str(numNewBOM))
         print(self.strComplete + self.clickButton_rusPricesFromFolder.__name__)
         logger.info('Закончен "Сделать прайс русский из папки ". Новых BOM-кодов: ' + str(numNewBOM))
+        messagebox.showinfo(title='Успех!', message='Сделан русский прайс EXCEL для терминалов из папки!')
 
 
     #10 КЛИК - Сделать прайс Антенны русский из папки
@@ -187,6 +187,8 @@ class HytesPrices(tk.Tk):
         dirIn = filedialog.askdirectory(initialdir=self.dirCommon,
                                         title='Выберите папку с терминальными прайсами из CPQ')
         HYTES_PriceList_Filename = filedialog.askopenfilename(initialdir=self.dirCommon,
+                                                              initialfile="Прайс Хайтес.xlsx",
+                                                              defaultextension=".xlsx",
                                                               title='Выберите "Прайс Хайтес"')
         kwargs1 = {
             "dirIn": dirIn
@@ -210,6 +212,19 @@ class HytesPrices(tk.Tk):
         self.clickButton_dividePriceBySheets(**kwargs4)
         print(self.strComplete + self.clickButton_rusAntennaFromFolder.__name__)
         logger.info('Закончен "Сделать прайс Антенны русский из папки"')
+
+        numNewBOM = hytALGORITHMS.findNewBOM(cpqPricesCombine_Filename)
+        print("Новых BOM-кодов: " + str(numNewBOM))
+        try:
+            # print(cpqPricesCombine_Filename)
+            # print(rusPricesFromFile_Filename)
+            # print(onePagePriceUnique_filename)
+            os.remove(cpqPricesCombine_Filename)
+            os.remove(rusPricesFromFile_Filename)
+            os.remove(onePagePriceUnique_filename)
+        except OSError:
+            pass
+        messagebox.showinfo(title='Успех!', message='Сделан русский прайс EXCEL для Антенн из папки!')
 
     #3 КЛИК - Подставить цены из прайса Хайтес
     def clickButton_rusPricesFromFile(self, **kwargs):
@@ -254,7 +269,7 @@ class HytesPrices(tk.Tk):
         # берем перечень файлов с прайсами
         filesPrices = sorted(os.listdir(dirIn))
         # собираем прайсы в одну книгу #####################################################################################
-        hytALGORITHMS.cpqPricesCombine(filesPrices, wbOut)
+        errors = hytALGORITHMS.cpqPricesCombine(filesPrices, wbOut)
         ####################################################################################################################
         # сохраняем новую комбинированную книгу
         #dirOut = filedialog.askdirectory(title='Выберите папку, в которую сохранить общий прайс')
@@ -266,6 +281,11 @@ class HytesPrices(tk.Tk):
         wbOut.save(outputFileName)
         wbOut.close()
         print(self.strComplete +  self.clickButton_cpqPricesCombine.__name__)
+        for err in errors:
+            if err == '[]' or err == '' or err == ' ':
+                continue
+            else:
+                logger.info(err)
         logger.info('Закончен "Комбинировать ТЕРМИНАЛЬНЫЕ прайсы в одну книгу в виде закладок". Создан файл: ' + outputFileName)
         return outputFileName
 
@@ -333,14 +353,25 @@ class HytesPrices(tk.Tk):
         priceDate = self.price_date.get()
         priceVersion = self.price_version.get()
         excel_File_Rus = filedialog.askopenfilename(initialdir=self.dirCommon, title='Выберите файл .XLSX с прайсом "RUS"')
-        templateGPL = filedialog.askopenfilename(initialdir=self.dirCommon, title='Выберите файл с шаблоном DOCX GPL')
-        templateRRC = hytALGORITHMS.convertGPL2RRC(templateGPL)
+        word_template = filedialog.askopenfilename(initialdir=self.dirCommon, title='Выберите файл с шаблоном прайса DOCX')
+        word_files = hytALGORITHMS.convertGPL2RRC(word_template, priceVersion, priceDate)
         # templateRRC = filedialog.askopenfilename(title='Выберите файл с шаблоном DOCX РРЦ')
         dirImage = filedialog.askdirectory(initialdir=self.dirCommon + '00_Images',
                                            title='Выберите папку с изображениями')
-        hytALGORITHMS.excel2word(excel_File_Rus, templateGPL, templateRRC,dirImage, priceDate, priceVersion)
-        print(self.strComplete + self.clickButton_makeDOCx.__name__)
+        errors = hytALGORITHMS.excel2word(excel_File_Rus, word_files[0], word_files[1], dirImage, priceDate, priceVersion)
+        for err in errors:
+            if err == [] or err == '' or err == ' ':
+                continue
+            else:
+                logger.info(err)
+        try:
+            os.remove(word_files[0])
+            os.remove(word_files[1])
+        except OSError:
+            pass
         logger.info('Закончен "Преобразовать Excel в Word"')
+        print(self.strComplete + self.clickButton_makeDOCx.__name__)
+        messagebox.showinfo(title='Успех!', message='Преобразован прайс Excel в Word (GPL\РРЦ)!')
 
     #7 КЛИК - сравнение двух файлов EXCEL RUS
     def clickButton_compareEXCELrus(self):
@@ -348,9 +379,15 @@ class HytesPrices(tk.Tk):
         OldFileName = filedialog.askopenfilename(title='Выберите СТАРЫЙ прайс "RUS" для сравнения')
         NewFileName = filedialog.askopenfilename(initialdir=self.dirCommon, title='Выберите НОВЫЙ прайс "RUS" для сравнения')
         print('Сравниваю...')
-        hytALGORITHMS.compareEXLSrus(NewFileName, OldFileName)
+        errors = hytALGORITHMS.compareEXLSrus(NewFileName, OldFileName)
         print(self.strComplete + self.clickButton_compareEXCELrus.__name__)
+        for err in errors:
+            if err == '[]' or err == '' or err == ' ':
+                continue
+            else:
+                logger.info(err)
         logger.info('Закончен "Сравнение двух файлов EXCEL RUS"')
+        messagebox.showinfo(title='Успех!', message='Завершено сравнение двух прайсов EXCEL!')
 
    #9 КЛИК - Конвертировать системный прайс в терминальный
     def clickButton_prepareSystem(self):
@@ -388,9 +425,11 @@ class HytesPrices(tk.Tk):
 
     #10 КЛИК - Конвертировать GPL шаблон в РРЦ
     def clickButton_convertGPL2RRC(self):
+        priceDate = self.price_date.get()
+        priceVersion = self.price_version.get()
         logger.info('Начат "Конвертировать GPL шаблон в РРЦ"')
-        templateGPL = filedialog.askopenfilename(initialdir=self.dirCommon, title='Выберите файл с шаблоном DOCX GPL')
-        hytALGORITHMS.convertGPL2RRC(templateGPL)
+        word_template = filedialog.askopenfilename(initialdir=self.dirCommon, title='Выберите файл с шаблоном прайса DOCX')
+        hytALGORITHMS.convertGPL2RRC(word_template, priceVersion, priceDate)
         print(self.strComplete + self.clickButton_convertGPL2RRC.__name__)
         logger.info('Закончен "Конвертировать GPL шаблон в РРЦ"')
 

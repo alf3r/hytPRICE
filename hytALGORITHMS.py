@@ -110,6 +110,7 @@ def diff_pd(old_df, new_df, idx_col):
 #######################################################################################################################
 # Сравнение прайсов RUS
 def compareEXLSrus(NewFileName: str, OldFileName: str):
+    errors = []
     from openpyxl.styles import PatternFill
     wbNEW = openpyxl.load_workbook(NewFileName, data_only=True)
     mySheets = wbNEW.sheetnames
@@ -128,6 +129,7 @@ def compareEXLSrus(NewFileName: str, OldFileName: str):
             with pd.ExcelWriter(ComparedFileName, engine='openpyxl', mode='a') as writer:
                 diff_df.to_excel(writer, index=True, sheet_name=sheet_2_compare)
         except Exception as myError:
+            errors.append('Ошибка: ' + str(myError))
             print('Ошибка: ' + str(myError))
     # раскрасить ячейки
     redFill = PatternFill(start_color='ff0000',
@@ -159,15 +161,18 @@ def compareEXLSrus(NewFileName: str, OldFileName: str):
             elif (rowFlag == 'notChanged'):
                 sheetIn.cell(row=row1, column=2).fill = grayFill
             else:
+                errors.append('Ошибка ->> нет такого статуса ' + rowFlag)
                 print('Ошибка ->> нет такого статуса ' + rowFlag)
     wbCOMPARED.save(filename=ComparedFileName)
     wbCOMPARED.close()
     print('Успех! ' + compareEXLSrus.__name__)
+    return errors
 
 
 ########################################################################################################################
 # Комбинирование нескольких ТЕРМИНАЛЛЬНЫХ прайсов в один ТЕРМИНАЛЬНЫЙ ПРАЙС с закладками
 def cpqPricesCombine(filesPrices: list[str], wbCombine: openpyxl.Workbook):
+    errors = []
     for n, item in enumerate(filesPrices):
         wbIn = openpyxl.load_workbook(item, data_only=True)
         sheetInName = wbIn.sheetnames[0]
@@ -177,9 +182,10 @@ def cpqPricesCombine(filesPrices: list[str], wbCombine: openpyxl.Workbook):
         sheetIn = wbIn.active
         sheetOut = wbCombine.create_sheet(sheetInName)
         # подготовим листы для соединения
-        prepare_sheet(sheetIn, sheetOut, sheetInName)
+        errors.append(prepare_sheet(sheetIn, sheetOut, sheetInName))
         wbIn.close()
     print('Успех! ' + cpqPricesCombine.__name__)
+    return errors
 
 def copy_sheet(source_sheet, target_sheet):
     copy_cells(source_sheet, target_sheet)  # copy all the cel values and styles
@@ -248,7 +254,7 @@ def cpqSystemCombine(filesPrices: list[str], wb_target: openpyxl.Workbook):
         if 'Sheet' in wb_target.sheetnames:  # remove default sheet
             wb_target.remove(wb_target['Sheet'])
         wb_source.close()
-    print('Успех! ' + cpqPricesCombine.__name__)
+    print('Успех! ' + cpqSystemCombine.__name__)
 
 
 ########################################################################################################################
@@ -481,6 +487,7 @@ def sheetCPQ2RUS(sheetIn, sheetOut, currentCurrency):
 # подготовка листа для прайса
 def prepare_sheet(sheetIn, sheetOut, sheetInName):
     import openpyxl.cell as Cell
+    errors = []
     currColA = openpyxl.utils.column_index_from_string('A')
     currColB = openpyxl.utils.column_index_from_string('B')
     currColC = openpyxl.utils.column_index_from_string('C')
@@ -567,7 +574,9 @@ def prepare_sheet(sheetIn, sheetOut, sheetInName):
     sheetOut.cell(row=1, column=currColD).value = 'DESCRIPTION'
     sheetOut.cell(row=1, column=currColE).value = 'CPQ PRICE, USD'
     sheetOut.cell(row=1, column=currColF).value = 'TYPE'
-    print('Успех! ' + prepare_sheet.__name__ + ' - ' + sheetInName)
+    errors.append('Подготовлен лист продукта -> ' + sheetInName)
+    print('Подготовлен лист продукта -> ' + sheetInName)
+    return errors
 
 
 # Определение типа позиции
@@ -720,6 +729,7 @@ def setRusPrices(HYTES_PriceList_Filename: str, cpqPricesCombine_Filename: str):
 #######################################################################################################################
 # Поиск и исправление цен на акционные товары
 def checkDiscount(rusPrice_Filename: str):
+    errors = []
     wbCHECKED = openpyxl.load_workbook(rusPrice_Filename, data_only=True)
     checkSheets = wbCHECKED.sheetnames
     for n, item1 in enumerate(checkSheets):
@@ -730,10 +740,13 @@ def checkDiscount(rusPrice_Filename: str):
             idxDiscount = rowComment.find('акция, ')
             if idxDiscount != -1:
                 discountPrice = rowComment[7+idxDiscount:]
-                print(discountPrice)
+                product = str(sheetIn.cell(row=row1, column=1).value)
+                errors.append('Акция на ' + product + '. Новая цена = ' + discountPrice)
+                print('Акция на ' + product + '. Новая цена = ' + discountPrice)
                 sheetIn.cell(row=row1, column=6).value = int(discountPrice)
     wbCHECKED.save(filename=rusPrice_Filename)
     wbCHECKED.close()
+    return  errors
 
 #######################################################################################################################
 # Поиск новых позиций BOM
@@ -975,6 +988,7 @@ def processAccessory(i: int, currSheet, symbolGPL, symbolRRC, docxGPL, docxRRC, 
                      table_contents_Accessory_Case: list, table_contents_Accessory_Mount: list, table_contents_Accessory_PowerSupply: list,
                      table_contents_Accessory_Other: list):
     from docx.shared import Cm
+    errors = []
     start = time.time()  ## точка отсчета времени
     currMODEL = str(currSheet.cell(i, 2).value)
     currSUBTYPE = str(currSheet.cell(i, 9).value)
@@ -988,10 +1002,12 @@ def processAccessory(i: int, currSheet, symbolGPL, symbolRRC, docxGPL, docxRRC, 
         except:
             currImageGPL = currImageEmptyGPL
             currImageRRC = currImageEmptyRRC
+            errors.append('error open image --> ' + currImageName)
             print('error open image --> ' + currImageName)
     else:
         currImageGPL = currImageEmptyGPL
         currImageRRC = currImageEmptyRRC
+        errors.append('no such image --> ' + currImageName)
         print('no such image --> ' + currImageName)
     if currSUBTYPE == 'Antenna':
         table_contents_Accessory_Antenna.append({
@@ -1063,11 +1079,13 @@ def processAccessory(i: int, currSheet, symbolGPL, symbolRRC, docxGPL, docxRRC, 
             'ImageGPL': currImageGPL,
             'ImageRRC': currImageRRC
         })
-    end = time.time() - start  ## собственно время работы программы
+    # end = time.time() - start  ## собственно время работы программы
     # print(str(end) + ': processAccessory -> ' + currMODEL)  ## вывод времени
+    return errors
 
 def excel2word(excel_File_Rus: str, templateGPL: str, templateRRC: str, dirImage: str, price_date: str, price_version: str):
     from docx2pdf import convert
+    errors = []
     startAll = time.time()  ## точка отсчета времени
     # start = time.time()  ## точка отсчета времени
     # end = time.time() - start  ## собственно время работы программы
@@ -1077,7 +1095,7 @@ def excel2word(excel_File_Rus: str, templateGPL: str, templateRRC: str, dirImage
     docxRRC = DocxTemplate(templateRRC)
     context = {}
     symbolGPL = "¥"
-    symbolRRC = "$"
+    symbolRRC = "¥"
     for n, sheetName in enumerate(wbIn.sheetnames):
         currSheet = wbIn[sheetName]
         table_contents_Terminal = []
@@ -1115,10 +1133,10 @@ def excel2word(excel_File_Rus: str, templateGPL: str, templateRRC: str, dirImage
                 processSoftware(i, currSheet, symbolGPL, symbolRRC,
                                 table_contents_Software, table_contents_SoftwareEXTRA1, table_contents_SoftwareEXTRA2, table_contents_SoftwareEXTRA3)
             elif currTYPE == 'Accessory':
-                processAccessory(i, currSheet, symbolGPL, symbolRRC, docxGPL, docxRRC, dirImage,
+                errors.append(processAccessory(i, currSheet, symbolGPL, symbolRRC, docxGPL, docxRRC, dirImage,
                 table_contents_Accessory_Antenna, table_contents_Accessory_Audio, table_contents_Accessory_Cable,
                 table_contents_Accessory_Case, table_contents_Accessory_Mount, table_contents_Accessory_PowerSupply,
-                table_contents_Accessory_Other)
+                table_contents_Accessory_Other))
             elif (currTYPE == 'Antenna') or (currTYPE == 'AntennaMobile'):
                 table_contents_Antenna.append({
                     'Model': currSheet.cell(i, 2).value,
@@ -1128,6 +1146,7 @@ def excel2word(excel_File_Rus: str, templateGPL: str, templateRRC: str, dirImage
                     'PriceRRC': symbolRRC + str(currSheet.cell(i, 6).value)
                 })
             else:
+                errors.append('неизвестный тип = ' + currTYPE)
                 print('неизвестный тип = ' + currTYPE)
         curTableContentsTerminal = 'table_contents_' + sheetName
         curTableContentsTerminal1 = 'table_contents_VHF_' + sheetName
@@ -1175,24 +1194,29 @@ def excel2word(excel_File_Rus: str, templateGPL: str, templateRRC: str, dirImage
         start = time.time()  ## точка отсчета времени
         docxGPL.render(context)
         end = time.time() - start  ## собственно время работы программы
+        errors.append('Успех! Генерация файла ' + sheetName + ' docx-GPL завершена! Время генерации: '+str(end) + ',c')
         print('Успех! Генерация файла ' + sheetName + ' docx-GPL завершена! Время генерации: '+str(end) + ',c')
         start = time.time()  ## точка отсчета времени
         docxRRC.render(context)
         end = time.time() - start  ## собственно время работы программы
+        errors.append('Успех! Генерация файла ' + sheetName + ' docx-РРЦ завершена! Время генерации: '+str(end) + ',c')
         print('Успех! Генерация файла ' + sheetName + ' docx-РРЦ завершена! Время генерации: '+str(end) + ',c')
     wbIn.close()
     filenames = makeStandardDocxName(excel_File_Rus, price_date, price_version)
+    errors.append('Сохраняю в DOCX.......')
     print('Сохраняю в DOCX.......')
     docxGPL.save(filenames[0])
     docxRRC.save(filenames[1])
     update_toc(filenames[0])
     update_toc(filenames[1])
+    errors.append('Конвертирую в PDF.......')
     print('Конвертирую в PDF.......')
     convert(filenames[0])
     convert(filenames[1])
     print('Успех! ' + excel2word.__name__)
     endAll = (time.time() - startAll)/60  ## собственно время работы программы
     print('Время конвертации: '+str(endAll) + ',мин')
+    return errors
 
 def makeStandardDocxName(old_filename: str, price_date: str, price_version: str):
     dir2save = os.path.dirname(os.path.abspath(old_filename)) + '\\'
@@ -1202,22 +1226,31 @@ def makeStandardDocxName(old_filename: str, price_date: str, price_version: str)
     filename_GPL = dir2save + str(price_date) + ' Price-book Hytera ' + fileType + ' (GPL, без НДС, для партнеров) ' + str(price_version) + '.docx'
     filename_RRC = dir2save + str(price_date) + ' Price-book Hytera ' + fileType + ' (РРЦ, с НДС, для заказчиков) ' + str(price_version) + '.docx'
     filenames = [filename_GPL, filename_RRC]
-    print(filenames[0])
-    print(filenames[1])
+    # print(filenames[0])
+    # print(filenames[1])
     return filenames
 
 ########################################################################################################################
 # Сделать из шаблона GPL шаблон РРЦ
-def convertGPL2RRC(word_FileGPL: str):
+def convertGPL2RRC(word_template: str, version: str, dated:str):
     import docx
-    idxXLSX = word_FileGPL.find('GPL.docx')
-    word_FileRRC = word_FileGPL[:idxXLSX] + 'РРЦ.docx'
-    doc = docx.Document(word_FileGPL)
+    word_files = []
+    idxXLSX = word_template.find('.docx')
+    word_FileGPL = word_template[:idxXLSX] + ' GPL.docx'
+    word_FileRRC = word_template[:idxXLSX] + ' РРЦ.docx'
+    word_files.append(word_FileGPL)
+    word_files.append(word_FileRRC)
+
+    doc = docx.Document(word_template)
+    docx_find_replace_text(doc, '[type]', 'GPL, без НДС')
+    docx_find_replace_text(doc, '[version]', version)
+    docx_find_replace_text(doc, '[dated]', dated)
+    doc.save(word_FileGPL)
     docx_find_replace_text(doc, 'GPL, без НДС', 'РРЦ, с НДС')
     docx_find_replace_text(doc, 'ImageGPL', 'ImageRRC')
     docx_find_replace_text(doc, 'PriceGPL', 'PriceRRC')
     doc.save(word_FileRRC)
-    return word_FileRRC
+    return word_files
 
 def update_toc(docx_file):
     # pass
