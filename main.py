@@ -421,7 +421,8 @@ class HytesPrices(tk.Tk):
             finally:
                 wbIn.close()
         print(self.strComplete + self.clickButton_prepareSystem.__name__)
-        logger.info('Закончен "Конвертировать системный прайс в терминальный"')
+        logger.info('Закончен "Конвертировать прайс CPQ в терминальный"')
+        messagebox.showinfo(title='Успех!', message='Завершено конвертирование прайс CPQ в терминальный!')
 
     #10 КЛИК - Конвертировать GPL шаблон в РРЦ
     def clickButton_convertGPL2RRC(self):
@@ -463,8 +464,9 @@ class HytesPrices(tk.Tk):
                 print(outputFileName)
             finally:
                 wbIn.close()
-        print(self.strComplete + self.clickButton_prepareSystem.__name__)
-        logger.info('Закончен "Конвертировать системный прайс в российский CNY"')
+        print(self.strComplete + self.clickButton_convertSystemCNY.__name__)
+        logger.info('Закончен "Конвертировать прайс CPQ в системный российский CNY"')
+        messagebox.showinfo(title='Успех!', message='Завершено конвертирование прайса CPQ в системный российский CNY!')
 
 
     #12 КЛИК - Комбинировать СИСТЕМНЫЕ прайсы в одну книгу в виде закладок
