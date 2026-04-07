@@ -1216,6 +1216,7 @@ def excel2word(excel_File_Rus: str, templateGPL: str, templateRRC: str, dirImage
     print('Успех! ' + excel2word.__name__)
     endAll = (time.time() - startAll)/60  ## собственно время работы программы
     print('Время конвертации: '+str(endAll) + ',мин')
+    errors.append('Время конвертации: '+str(endAll) + ',мин')
     return errors
 
 def makeStandardDocxName(old_filename: str, price_date: str, price_version: str):

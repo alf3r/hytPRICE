@@ -353,7 +353,8 @@ class HytesPrices(tk.Tk):
         priceDate = self.price_date.get()
         priceVersion = self.price_version.get()
         excel_File_Rus = filedialog.askopenfilename(initialdir=self.dirCommon, title='Выберите файл .XLSX с прайсом "RUS"')
-        word_template = filedialog.askopenfilename(initialdir=self.dirCommon, title='Выберите файл с шаблоном прайса DOCX')
+        word_template = filedialog.askopenfilename(initialdir=self.dirCommon + '01_templates',
+                                                   title='Выберите файл с шаблоном прайса DOCX')
         word_files = hytALGORITHMS.convertGPL2RRC(word_template, priceVersion, priceDate)
         # templateRRC = filedialog.askopenfilename(title='Выберите файл с шаблоном DOCX РРЦ')
         dirImage = filedialog.askdirectory(initialdir=self.dirCommon + '00_Images',
