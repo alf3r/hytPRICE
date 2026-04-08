@@ -1,0 +1,2 @@
+pip.exe install docxtpl spire.doc spire pandas openpyxl
+python.exe .\main.ru
