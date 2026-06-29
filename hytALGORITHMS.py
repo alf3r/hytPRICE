@@ -1085,6 +1085,8 @@ def processAccessory(i: int, currSheet, symbolGPL, symbolRRC, docxGPL, docxRRC, 
 
 def excel2word(excel_File_Rus: str, templateGPL: str, templateRRC: str, dirImage: str, price_date: str, price_version: str):
     from docx2pdf import convert
+    import comtypes.client
+    wdFormatPDF = 17
     errors = []
     startAll = time.time()  ## точка отсчета времени
     # start = time.time()  ## точка отсчета времени
@@ -1261,7 +1263,7 @@ def update_toc(docx_file):
     doc.TablesOfContents(1).Update()
     # doc.TablesOfContents(1).UpdatePageNumbers()
     doc.Close(SaveChanges=True)
-    word.Quit()
+    # word.Quit()
 
 
 # функция поиска и замены
