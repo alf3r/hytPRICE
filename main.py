@@ -60,7 +60,7 @@ class HytesPrices(tk.Tk):
 
         # define variables
         self.myPrefix = tk.StringVar(value='')
-        self.price_date = tk.StringVar(value='2026.Q2')
+        self.price_date = tk.StringVar(value='2026.Q3')
         self.price_version = tk.StringVar(value='V1.0')
         self.currentCurrency = tk.StringVar(value='7.16')
         self.isAntenna = tk.IntVar(value=0)
