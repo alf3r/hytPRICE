@@ -107,7 +107,6 @@ def diff_pd(old_df, new_df, idx_col):
     df_changed = reportDiff(dfChangedOld, dfChangedNew)
     idxChanged = df_changed.index
     df_notChanged = new_common.copy()
-    # df_changed = df_all_changes.groupby(level=0,axis=1).apply(lambda frame: frame.apply(report_diff, axis=1))
     if not idxChanged.empty:
         df_notChanged = new_common.drop(idxChanged)
     # add changed dataframe to output data only if non empty
