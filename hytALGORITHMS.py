@@ -88,7 +88,7 @@ def diff_pd(old_df, new_df, idx_col):
         keys=['old', 'new']
     ).swaplevel(axis='columns')
     # using report_diff to merge the changes in a single cell with "-->"
-    df_changed = df_all_changes.groupby(level=0, axis=1).apply(lambda frame: frame.apply(report_diff, axis=1))
+    df_changed = df_all_changes.groupby(level=0).apply(lambda frame: frame.apply(report_diff, axis=1))
     df_notChanged = new_common
     # add changed dataframe to output data only if non empty
     if not df_changed.empty:
