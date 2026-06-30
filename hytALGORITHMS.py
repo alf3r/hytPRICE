@@ -12,6 +12,9 @@ from openpyxl.utils import get_column_letter
 
 from docxtpl import DocxTemplate, InlineImage
 
+pd.set_option('display.max_columns', None)  # None означает «показать все столбцы»
+pd.set_option('display.width', 1000)
+
 ########################################################################################################################
 # Удаление форматов из листа
 def removeFormatting(ws):
@@ -25,6 +28,17 @@ def removeFormatting(ws):
 def report_diff(x):
     """Function to use with groupby.apply to highlight value changes."""
     return x.iloc[0] if x.iloc[0] == x.iloc[1] or pd.isna(x).all() else f'{x.iloc[0]} ---> {x.iloc[1]}'
+
+def reportDiff(dfOld, dfNew):
+    for i in range(dfOld.shape[0]):
+        valOld = dfOld.iloc[i].copy()
+        valNew = dfNew.iloc[i].copy()
+        for j in range(len(valOld)):
+            if str(valOld.iloc[j]) != str(valNew.iloc[j]):
+                vN = valNew.copy()
+                vN.iloc[j] = str(valOld.iloc[j]) + ' ---> ' + str(valNew.iloc[j])
+        dfNew.iloc[i] = vN
+    return dfNew
 
 def strip(x):
     """Function to use with applymap to strip whitespaces from a dataframe."""
@@ -88,16 +102,25 @@ def diff_pd(old_df, new_df, idx_col):
         keys=['old', 'new']
     ).swaplevel(axis='columns')
     # using report_diff to merge the changes in a single cell with "-->"
-    df_changed = df_all_changes.groupby(level=0).apply(lambda frame: frame.apply(report_diff, axis=1))
-    df_notChanged = new_common
+    dfChangedOld = old_common.loc[changed_keys]
+    dfChangedNew = new_common.loc[changed_keys]
+    df_changed = reportDiff(dfChangedOld, dfChangedNew)
+    idxChanged = df_changed.index
+    df_notChanged = new_common.copy()
+    # df_changed = df_all_changes.groupby(level=0,axis=1).apply(lambda frame: frame.apply(report_diff, axis=1))
+    if not idxChanged.empty:
+        df_notChanged = new_common.drop(idxChanged)
     # add changed dataframe to output data only if non empty
     if not df_changed.empty:
-        out_data['changed'] = df_changed
+        out_data["changed"] = df_changed
     if not df_notChanged.empty:
-        out_data['notChanged'] = df_notChanged
+        out_data["notChanged"] = df_notChanged
     combined_df = pd.DataFrame()
     for sname, data in out_data.items():
-        data.loc[data['MODEL RUS'] != '', 'STATUS'] = sname
+        try:
+            data.loc[data['MODEL RUS'] != '', 'STATUS'] = sname
+        except Exception as myError:
+            print('Ошибка: нет такой позиции ->' + str(sname))
         combined_df = pd.concat([data, combined_df])
     combined_df = combined_df[['STATUS', 'MODEL RUS', 'DESCRIPTION ENG', 'DESCRIPTION RUS',
                            'GPL, CNY', 'РРЦ, CNY', 'COMMENTS', 'MAINTYPE', 'SUBTYPE', 'FREQUENCY BAND']
@@ -144,6 +167,9 @@ def compareEXLSrus(NewFileName: str, OldFileName: str):
     grayFill = PatternFill(start_color='B8B8B8',
                           end_color='B8B8B8',
                           fill_type='solid')
+    blueFill = PatternFill(start_color='00FFFF',
+                          end_color='00FFFF',
+                          fill_type='solid')
     wbCOMPARED = openpyxl.load_workbook(ComparedFileName, data_only=True)
     del wbCOMPARED['Sheet']
     compSheets = wbCOMPARED.sheetnames
@@ -151,15 +177,17 @@ def compareEXLSrus(NewFileName: str, OldFileName: str):
         sheetIn = wbCOMPARED[item1]
         rowsIn = sheetIn.max_row+1
         for row1 in range(2, rowsIn):
-            rowFlag = sheetIn.cell(row=row1, column=2).value
-            if (rowFlag == 'removed'):
+            rowFlag = str(sheetIn.cell(row=row1, column=2).value)
+            if rowFlag == 'removed':
                 sheetIn.cell(row=row1, column=2).fill = redFill
-            elif (rowFlag == 'changed'):
+            elif rowFlag == 'changed':
                 sheetIn.cell(row=row1, column=2).fill = yellowFill
-            elif (rowFlag == 'added'):
+            elif rowFlag == 'added':
                 sheetIn.cell(row=row1, column=2).fill = greenFill
-            elif (rowFlag == 'notChanged'):
+            elif rowFlag == 'notChanged':
                 sheetIn.cell(row=row1, column=2).fill = grayFill
+            elif rowFlag == 'None':
+                sheetIn.cell(row=row1, column=2).fill = blueFill
             else:
                 errors.append('Ошибка ->> нет такого статуса ' + rowFlag)
                 print('Ошибка ->> нет такого статуса ' + rowFlag)
@@ -170,7 +198,7 @@ def compareEXLSrus(NewFileName: str, OldFileName: str):
 
 
 ########################################################################################################################
-# Комбинирование нескольких ТЕРМИНАЛЛЬНЫХ прайсов в один ТЕРМИНАЛЬНЫЙ ПРАЙС с закладками
+# Комбинирование нескольких ТЕРМИНАЛЬНЫХ прайсов в один ТЕРМИНАЛЬНЫЙ ПРАЙС с закладками
 def cpqPricesCombine(filesPrices: list[str], wbCombine: openpyxl.Workbook):
     errors = []
     for n, item in enumerate(filesPrices):
